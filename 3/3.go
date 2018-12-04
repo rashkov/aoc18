@@ -15,14 +15,14 @@ func check(e error) {
 	}
 }
 
-const LENGTH = 10
+const LENGTH = 1000
 
 type SquareInch struct {
 	claimant_ids []string
 }
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 
@@ -59,7 +59,7 @@ func main() {
 		y_extent, err := strconv.ParseInt(parsed_extents[2], 10, 64)
 		check(err)
 
-		fmt.Printf("#%s @ %d,%d: %dx%d\n", claimant_id, x_coord, y_coord, x_extent, y_extent)
+		// fmt.Printf("#%s @ %d,%d: %dx%d\n", claimant_id, x_coord, y_coord, x_extent, y_extent)
 		// fmt.Println("x: ", x_coord, "y: ", y_coord)
 		// fmt.Println("width: ", x_extent, "height: ", y_extent)
 		for i := int64(0); i < x_extent; i++ {
