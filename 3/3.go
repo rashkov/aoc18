@@ -17,22 +17,21 @@ func check(e error) {
 
 const LENGTH = 10
 
+type SquareInch struct {
+	claimant_ids []string
+}
+
 func main() {
 	f, err := os.Open("./test_input.txt")
 	check(err)
 	defer f.Close()
 
-	type SquareInch struct {
-		num_claims int
-		claimant_ids []string
-	}
-
 	var matx [LENGTH][LENGTH] SquareInch
-	for i := 0; i < LENGTH; i++ {
-		for j := 0; i < LENGTH; i++ {
-			matx[i][j] = SquareInch{ 0, nil}
-		}
-	}
+	// for i := 0; i < LENGTH; i++ {
+	// 	for j := 0; i < LENGTH; i++ {
+	// 		matx[i][j] = SquareInch{ 0, nil}
+	// 	}
+	// }
 
 	valid_claims := make(map[string]bool)
 
@@ -67,10 +66,9 @@ func main() {
 			for j := int64(0); j < y_extent; j++ {
 				x := x_coord + i
 				y := y_coord + j
-				matx[x][y].num_claims += 1
 				// add the new claim
 				matx[x][y].claimant_ids = append(matx[x][y].claimant_ids, claimant_id)
-				// Invalidate claims
+				// Invalidate all claims to the square if there are more than one
 				if len(matx[x][y].claimant_ids) > 1 {
 					// Invalidate claim
 					for _, claim_id := range matx[x][y].claimant_ids{
@@ -84,23 +82,26 @@ func main() {
 	count := 0
 	for i := 0; i < LENGTH; i++ {
 		for j := 0; j < LENGTH; j++ {
-			if matx[i][j].num_claims > 1{
+			if len(matx[i][j].claimant_ids) > 1{
 				count++
 			}
 		}
 	}
 
-	// fmt.Println("Part 1: ", count)
+	fmt.Println("Part 1:", count)
 
-	// for claimant_id, valid := range(valid_claims){
-	// 	if valid{
-	// 		fmt.Println("Part 2:", claimant_id)
-	// 	}
-	// }
+	for claimant_id, valid := range(valid_claims){
+		if valid{
+			fmt.Println("Part 2:", claimant_id)
+		}
+	}
+	//print_table(matx)
+}
 
+func print_table(table [LENGTH][LENGTH]SquareInch){
 	for j := 0; j < LENGTH; j++ {
 		for i := 0; i < LENGTH; i++ {
-			cell := matx[i][j]
+			cell := table[i][j]
 			if len(cell.claimant_ids) == 1 {
 				fmt.Print(cell.claimant_ids[0] + " ")
 			}else if len(cell.claimant_ids) == 0{
@@ -108,8 +109,7 @@ func main() {
 			}else{
 				fmt.Print("X ")
 			}
-			//fmt.Println(matx[i][j])
 		}
-		fmt.Println()
+		fmt.Println() // Add newline between rows
 	}
 }
