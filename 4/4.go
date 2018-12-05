@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
-	"regexp"
-	"strconv"
+	_ "regexp"
+	"sort"
+	_ "strconv"
 )
 
 func check(e error) {
@@ -21,13 +21,14 @@ func main() {
 	defer f.Close()
 
 	var input []string
-	data_struct := make(map[string]bool)
+	//var txt []string
+	// data_struct := make(map[string]bool)
 
 	scanner := bufio.NewScanner(f)
 	defer check(scanner.Err())
 	for scanner.Scan() {
-		// txt := strings.Split(scanner.Text(), " ")
-		input := append(input, scanner.Text())
+		// txt = strings.Split(scanner.Text(), "\n")
+		input = append(input, scanner.Text())
 
 		// coordRE := regexp.MustCompile(`(\d+),(\d+)`)
 		// parsed_coords := coordRE.FindStringSubmatch(coords)
@@ -35,5 +36,8 @@ func main() {
 		// check(err)
 
 	}
-	fmt.Println(input)
+	sort.Strings(input)
+	for _, line := range(input){
+		fmt.Println(line)
+	}
 }
