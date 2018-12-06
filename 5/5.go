@@ -23,6 +23,10 @@ func main() {
 	check(err)
 	polymer_str := strings.TrimSpace(string(polymer))
 
+	for _, t := range(get_all_types(polymer_str)){
+		fmt.Println(string(t))
+	}
+
 	// var a string = "dabAcCaCBAcCcaDA"
 	var a string = polymer_str
 	// fmt.Println(len(a), len(strings.TrimSpace(a)))
@@ -40,15 +44,27 @@ func main() {
 	fmt.Println("Part 1", len(res2))
 }
 
-func should_destroy(a byte, b byte) bool{
-	return same_type(a,b) && reverse_polarity(a,b)
+func get_all_types(str string) []byte {
+	var types []byte
+	keys := make(map[byte]bool)
+	for _, s := range str {
+		keys[strings.ToLower(string(s))[0]] = true
+	}
+	for key, _ := range keys {
+		types = append(types, key)
+	}
+	return types
 }
 
-func same_type(a byte, b byte) bool{
+func should_destroy(a byte, b byte) bool {
+	return same_type(a, b) && reverse_polarity(a, b)
+}
+
+func same_type(a byte, b byte) bool {
 	return strings.ToUpper(string(a)) == strings.ToUpper(string(b))
 }
 
-func reverse_polarity(a byte, b byte) bool{
+func reverse_polarity(a byte, b byte) bool {
 	return same_type(a, b) && a != b
 }
 
@@ -61,14 +77,14 @@ func reduce(str string) string {
 		} else {
 			left_last := left[len(left)-1]
 			right_first := right[0]
-			if should_destroy(left_last, right_first){
+			if should_destroy(left_last, right_first) {
 				return left[0:len(left)-1] + right[1:]
-			}else{
+			} else {
 				return left + right
 			}
 		}
 	} else if len(str) == 2 {
-		if should_destroy(str[0], str[1]){
+		if should_destroy(str[0], str[1]) {
 			return ""
 		} else {
 			return str
@@ -81,7 +97,7 @@ func reduce(str string) string {
 	return str
 }
 
-func test(){
+func test() {
 	fmt.Println(same_type('a', 'A'))
 	fmt.Println(same_type('b', 'A'))
 	fmt.Println(reverse_polarity('a', 'A'))
