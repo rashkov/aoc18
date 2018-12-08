@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -21,7 +22,8 @@ func Use(vals ...interface{}) {
 }
 
 type Coord struct {
-	x, y int
+	x, y   int
+	symbol string
 }
 
 var coords []Coord
@@ -43,44 +45,71 @@ func main() {
 	width, height := find_extents(coords)
 	fmt.Println("width, height: ", width, height)
 
-	// This grid should be used in Y, X form
-	var grid [][]string
+	var grid [][]string // This grid should be used in Y, X form
 	grid = make([][]string, height)
 	for i := 0; i < height; i++ {
 		grid[i] = make([]string, width)
-		for j := 0; j < width; j++ {
-			grid[i][j] = "-"
-		}
+		// for j := 0; j < width; j++ {
+		// 	grid[i][j] = "-"
+		// }
 	}
-	populate_grid(&grid, coords)
+	populate_grid(&grid, coords, width, height)
 	print_grid(&grid)
 }
 
-func populate_grid(grid *[][]string, coords []Coord) {
+func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
 	for _, coord := range coords {
-		(*grid)[coord.y][coord.x] = "*"
+		(*grid)[coord.y][coord.x] = coord.symbol
+	}
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			point := (*grid)[y][x]
+			if point == "" {
+				// Set it to a lowercase version of its nearest coord, or "." if tied
+				(*grid)[y][x] = "-"
+				distances := make(map[int][]string)
+				for _, coord := range coords {
+					distance := math.Abs(float64(x-coord.x)) + math.Abs(float64(y-coord.y))
+					// distances[coord.symbol] = int(distance)
+					distances[int(distance)] = append(distances[int(distance)], coord.symbol)
+				}
+
+				var shortest_dist = width + height + 1
+				for dist, _ := range distances {
+					if dist < shortest_dist {
+						shortest_dist = dist
+					}
+				}
+				closest_symbols := distances[shortest_dist]
+				if len(closest_symbols) > 1 {
+					(*grid)[y][x] = "." // There is a tie
+				}else{
+					(*grid)[y][x] = string(int(closest_symbols[0][0]) + 32) // Make it lowercase
+				}
+			}
+		}
 	}
 }
 
-func print_grid(grid *[][]string){
+func print_grid(grid *[][]string) {
 	fmt.Print("   ")
-	for x := 0; x < len((*grid)[0]); x++{
+	for x := 0; x < len((*grid)[0]); x++ {
 		fmt.Print(x, " ")
 	}
 	fmt.Print("\n")
-	for y := 0; y < len(*grid); y++{
+	for y := 0; y < len(*grid); y++ {
 		fmt.Println(y, (*grid)[y])
 	}
 }
 
 func parse_coords(input []string) []Coord {
-	for _, txt := range input {
+	for index, txt := range input {
 		xy := strings.Split(txt, ", ")
 		x64, err := strconv.ParseInt(xy[0], 10, 64)
 		check(err)
 		y64, err := strconv.ParseInt(xy[1], 10, 64)
 		check(err)
-		coords = append(coords, Coord{int(x64), int(y64)})
+		coords = append(coords, Coord{int(x64), int(y64), string(65 + index)})
 	}
 	return coords
 }
@@ -98,5 +127,5 @@ func find_extents(coords []Coord) (width, height int) {
 			max_y = coord.y
 		}
 	}
-	return max_x+1, max_y+1
+	return max_x + 1, max_y + 1
 }
