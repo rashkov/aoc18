@@ -26,7 +26,14 @@ type Coord struct {
 	symbol string
 }
 
+type Stat struct {
+	size     int
+	infinite bool
+}
+
 var coords []Coord
+
+var WELL_CONNECTED_METRIC = 10000
 
 func main() {
 	f, err := os.Open("./input.txt")
@@ -45,6 +52,15 @@ func main() {
 	width, height := find_extents(coords)
 	// fmt.Println("width, height: ", width, height)
 
+	grid := create_grid(width, height)
+	populate_grid(&grid, coords, width, height)
+	// print_grid(&grid)
+	stats := calc_stats(grid, width, height)
+	find_largest_contained_area(stats)
+	find_largest_well_connected_area(coords, width, height)
+}
+
+func create_grid(width, height int) ([][]string){
 	var grid [][]string // This grid should be used in Y, X form
 	grid = make([][]string, height)
 	for i := 0; i < height; i++ {
@@ -53,17 +69,20 @@ func main() {
 		// 	grid[i][j] = "-"
 		// }
 	}
-	populate_grid(&grid, coords, width, height)
-	find_largest_uncontained_area(grid, width, height)
-	// print_grid(&grid)
+	return grid
 }
 
-func find_largest_uncontained_area(grid [][]string, width int, height int) {
-	type Stat struct {
-		size     int
-		infinite bool
+func create_int_grid(width, height int) ([][]int){
+	var grid [][]int // This grid should be used in Y, X form
+	grid = make([][]int, height)
+	for i := 0; i < height; i++ {
+		grid[i] = make([]int, width)
 	}
-	stats := make(map[string]Stat)
+	return grid
+}
+
+func calc_stats(grid [][]string, width, height int) (stats map[string]Stat){
+	stats = make(map[string]Stat)
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			sym := grid[y][x]
@@ -76,7 +95,10 @@ func find_largest_uncontained_area(grid [][]string, width int, height int) {
 			stats[sym] = st
 		}
 	}
+	return stats
+}
 
+func find_largest_contained_area(stats map[string]Stat) {
 	var largest_sym string
 	var largest_size int
 	for candidate_sym, candidate_stat := range stats {
@@ -86,6 +108,33 @@ func find_largest_uncontained_area(grid [][]string, width int, height int) {
 		}
 	}
 	fmt.Println("Part 1: ", string(largest_sym), largest_size)
+}
+
+func find_largest_well_connected_area(coords []Coord, width, height int) {
+	// each point in the region must be well connected to all the coordinate on the grid
+	// well connected means abs(distance_a + distance_b + ... + distance_n) < 10000
+	grid := create_int_grid(width, height)
+	// fmt.Println(coords)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			var sum int
+			for _, coord := range coords {
+				sum += int(math.Abs(float64(x-coord.x)) + math.Abs(float64(y-coord.y)))
+			}
+			grid[y][x] = sum
+		}
+	}
+	// print_int_grid(&grid)
+
+	var region_size int64 = 0
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			if grid[y][x] < WELL_CONNECTED_METRIC {
+				region_size += 1
+			}
+		}
+	}
+	fmt.Println("Part 2:", region_size)
 }
 
 func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
@@ -121,6 +170,17 @@ func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
 }
 
 func print_grid(grid *[][]string) {
+	fmt.Print("   ")
+	for x := 0; x < len((*grid)[0]); x++ {
+		fmt.Print(x, " ")
+	}
+	fmt.Print("\n")
+	for y := 0; y < len(*grid); y++ {
+		fmt.Println(y, (*grid)[y])
+	}
+}
+
+func print_int_grid(grid *[][]int) {
 	fmt.Print("   ")
 	for x := 0; x < len((*grid)[0]); x++ {
 		fmt.Print(x, " ")
