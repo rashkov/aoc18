@@ -29,7 +29,7 @@ type Coord struct {
 var coords []Coord
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 	var input []string
@@ -40,10 +40,12 @@ func main() {
 	}
 
 	coords = parse_coords(input)
-	fmt.Println(coords)
+	// fmt.Println(coords)
 
 	width, height := find_extents(coords)
-	fmt.Println("width, height: ", width, height)
+	width += 1
+	height += 1
+	// fmt.Println("width, height: ", width, height)
 
 	var grid [][]string // This grid should be used in Y, X form
 	grid = make([][]string, height)
@@ -54,7 +56,38 @@ func main() {
 		// }
 	}
 	populate_grid(&grid, coords, width, height)
-	print_grid(&grid)
+	find_largest_uncontained_area(grid, width, height)
+	// print_grid(&grid)
+}
+
+func find_largest_uncontained_area(grid [][]string, width int, height int) {
+	type Stat struct {
+		size     int
+		infinite bool
+	}
+	stats := make(map[string]Stat)
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			sym := strings.ToLower(grid[y][x])
+			st := stats[sym]
+			size := st.size
+			st.size = size + 1
+			if x == 0 || x == width-1 || y == 0 || y == height-1 {
+				st.infinite = true
+			}
+			stats[sym] = st
+		}
+	}
+
+	var largest_sym string
+	var largest_size int
+	for candidate_sym, candidate_stat := range stats {
+		if candidate_stat.infinite == false && candidate_stat.size > largest_size {
+			largest_size = candidate_stat.size
+			largest_sym = candidate_sym
+		}
+	}
+	fmt.Println("Part 1: ", string(largest_sym[0]), largest_size)
 }
 
 func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
@@ -83,7 +116,7 @@ func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
 				closest_symbols := distances[shortest_dist]
 				if len(closest_symbols) > 1 {
 					(*grid)[y][x] = "." // There is a tie
-				}else{
+				} else {
 					(*grid)[y][x] = string(int(closest_symbols[0][0]) + 32) // Make it lowercase
 				}
 			}
