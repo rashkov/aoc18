@@ -21,17 +21,42 @@ func Use(vals ...interface{}) {
 func main() {
 	polymer, err := ioutil.ReadFile("./input.txt")
 	check(err)
+	// polymer = []byte("dabAcCaCBAcCcaDA")
 	polymer_str := strings.TrimSpace(string(polymer))
+	removed_lengths := make(map[byte]int)
 
-	for _, t := range(get_all_types(polymer_str)){
-		fmt.Println(string(t))
+	_, orig_reduced_length := reduce_until_done(polymer_str)
+	fmt.Println("Part 1", orig_reduced_length)
+
+	for _, letter := range get_all_types(polymer_str) {
+		str := remove_letter(polymer_str, letter)
+		_, reduced_length := reduce_until_done(str)
+		removed_lengths[letter] = reduced_length
 	}
 
-	// var a string = "dabAcCaCBAcCcaDA"
-	var a string = polymer_str
-	// fmt.Println(len(a), len(strings.TrimSpace(a)))
+	var smallest_letter byte
+	var smallest_length int = orig_reduced_length
+	for letter, length_without_letter := range removed_lengths {
+		if length_without_letter < smallest_length {
+			smallest_letter = letter
+			smallest_length = length_without_letter
+		}
+	}
+	fmt.Println("Part 2: Smallest after removing\n", smallest_length, string(smallest_letter))
+}
 
-	res1 := reduce(a)
+func remove_letter(str string, remove_letter byte) string {
+	var str_without_type string
+	for _, letter := range str {
+		if byte(letter) != remove_letter && string(letter) != strings.ToUpper(string(remove_letter)) {
+			str_without_type += string(letter)
+		}
+	}
+	return str_without_type
+}
+
+func reduce_until_done(polymer_str string) (string, int) {
+	res1 := reduce(polymer_str)
 	len1 := len(res1)
 	res2 := reduce(res1)
 	len2 := len(res2)
@@ -41,7 +66,7 @@ func main() {
 		res2 = reduce(res1)
 		len2 = len(res2)
 	}
-	fmt.Println("Part 1", len(res2))
+	return res2, len2
 }
 
 func get_all_types(str string) []byte {
@@ -102,4 +127,5 @@ func test() {
 	fmt.Println(same_type('b', 'A'))
 	fmt.Println(reverse_polarity('a', 'A'))
 	fmt.Println(reverse_polarity('A', 'A'))
+	fmt.Println(remove_letter("aaabcccc", 'b'))
 }
