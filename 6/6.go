@@ -43,8 +43,6 @@ func main() {
 	// fmt.Println(coords)
 
 	width, height := find_extents(coords)
-	width += 1
-	height += 1
 	// fmt.Println("width, height: ", width, height)
 
 	var grid [][]string // This grid should be used in Y, X form
@@ -68,7 +66,7 @@ func find_largest_uncontained_area(grid [][]string, width int, height int) {
 	stats := make(map[string]Stat)
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			sym := strings.ToLower(grid[y][x])
+			sym := grid[y][x]
 			st := stats[sym]
 			size := st.size
 			st.size = size + 1
@@ -87,7 +85,7 @@ func find_largest_uncontained_area(grid [][]string, width int, height int) {
 			largest_sym = candidate_sym
 		}
 	}
-	fmt.Println("Part 1: ", string(largest_sym[0]), largest_size)
+	fmt.Println("Part 1: ", string(largest_sym), largest_size)
 }
 
 func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
@@ -98,12 +96,10 @@ func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
 		for x := 0; x < width; x++ {
 			point := (*grid)[y][x]
 			if point == "" {
-				// Set it to a lowercase version of its nearest coord, or "." if tied
-				(*grid)[y][x] = "-"
+				// Set it to the symbol of its nearest coord, or "." if tied
 				distances := make(map[int][]string)
 				for _, coord := range coords {
 					distance := math.Abs(float64(x-coord.x)) + math.Abs(float64(y-coord.y))
-					// distances[coord.symbol] = int(distance)
 					distances[int(distance)] = append(distances[int(distance)], coord.symbol)
 				}
 
@@ -117,7 +113,7 @@ func populate_grid(grid *[][]string, coords []Coord, width int, height int) {
 				if len(closest_symbols) > 1 {
 					(*grid)[y][x] = "." // There is a tie
 				} else {
-					(*grid)[y][x] = string(int(closest_symbols[0][0]) + 32) // Make it lowercase
+					(*grid)[y][x] = string(int(closest_symbols[0][0]))
 				}
 			}
 		}
