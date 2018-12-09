@@ -48,7 +48,8 @@ func main() {
 			preceding_node Node
 			following_node Node
 			ok             bool
-			already_linked bool
+			already_linked_forward bool
+			already_linked_back bool
 		)
 		if preceding_node, ok = all_nodes[preceding_node_id]; ok != true {
 			preceding_node = Node{preceding_node_id, nil, nil}
@@ -60,36 +61,45 @@ func main() {
 		}
 		for _, link := range preceding_node.forward_links {
 			if link.id == following_node_id {
-				already_linked = true
+				already_linked_forward = true
 			}
 		}
-		if !already_linked {
+		if !already_linked_forward {
 			preceding_node.forward_links = append(preceding_node.forward_links, &following_node)
-			following_node.back_links = append(following_node.back_links, &preceding_node)
-			all_nodes[preceding_node_id] = preceding_node
-			all_nodes[following_node_id] = following_node
+			// following_node.back_links = append(following_node.back_links, &preceding_node)
 		}
+		for _, back_link := range following_node.back_links {
+			if back_link.id == preceding_node_id {
+				already_linked_back = true
+			}
+		}
+		if !already_linked_back {
+			// preceding_node.forward_links = append(preceding_node.forward_links, &following_node)
+			following_node.back_links = append(following_node.back_links, &preceding_node)
+		}
+		all_nodes[preceding_node_id] = preceding_node
+		all_nodes[following_node_id] = following_node
 	}
 
 	// Find the one that has no back links, that's our "root"
 	// In case of multiple root nodes, choose the alphabetically first one
-	var root_node Node
+	var root_nodes []Node
 	for _, node := range all_nodes {
 		if len(node.back_links) == 0 {
 			fmt.Println(node.id, " is a root node.")
-			if root_node.id == "" {
-				root_node = node
-			}else{
-				if node.id < root_node.id{
-					root_node = node
-				}
-			}
+			root_nodes = append(root_nodes, node)
 		}
 	}
-	fmt.Println("Ultimate root node: ", root_node)
+	fmt.Println("root nodes: ", root_nodes)
 
-	fmt.Println(bfs(all_nodes, root_node))
-
+	for _, root_node := range root_nodes {
+		path := bfs(all_nodes, root_node)
+		if len(path) != 0 {
+			fmt.Println("Found a path!")
+			fmt.Println(path)
+			break
+		}
+	}
 }
 
 func bfs(all_nodes map[string]Node, start_node Node) []string {
@@ -108,21 +118,24 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		sort.Strings(bfs_alpha_queue)
 		fmt.Println(bfs_alpha_queue)
 
-		// remove the first element from the queue which has all its links visited
+		// remove the first element from the queue which has all its back_links visited
 		// (On the first pass, that should be our start_node)
 		var current_node Node
 		for index, node_id := range bfs_alpha_queue {
 			node := all_nodes[node_id]
 			fmt.Println("starting with ", node_id, " has ", len(node.back_links), " links")
 			all_links_visited := true
+
 			for _, linked_node := range node.back_links {
-				_, ok := visited_links[linked_node.id + node.id]
-				if ok == false {
+				_, ok := visited_links[linked_node.id+node.id]
+				_, ok2 := visited_links[node.id+linked_node.id]
+				if ok == false && ok2 == false{
 					all_links_visited = false
 					visited_links[node_id+linked_node.id] = true
+					visited_links[linked_node.id+node_id] = true
 					fmt.Println("can't use, not visited from ", linked_node.id)
 					break
-				}else{
+				} else {
 					fmt.Println("visited from ", linked_node.id)
 				}
 			}
@@ -141,8 +154,9 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 
 		fmt.Println("Current node: ", current_node)
 		fmt.Println("BFS queue: ", bfs_alpha_queue)
-		if current_node.id == ""{
-			panic("Couldn't find a suitable node!")
+		if current_node.id == "" {
+			fmt.Println("Hit a dead end!\n")
+			return []string{}
 		}
 
 		// Got a node to process
@@ -152,15 +166,16 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		// add its links to the queue, marking the links as visited
 		// NOTE: Don't add a node if it's already in the queue
 		for _, linked_node := range current_node.forward_links {
-			fmt.Println(linked_node.id, " precedes it")
-			visited_links[current_node.id + linked_node.id] = true
+			fmt.Println(linked_node.id, " follows it")
+			visited_links[current_node.id+linked_node.id] = true
+			// visited_links[linked_node.id+current_node.id] = true
 			var already_in_queue = false
 			for _, queued := range bfs_alpha_queue {
-				if queued == linked_node.id{
+				if queued == linked_node.id {
 					already_in_queue = true
 				}
 			}
-			if !already_in_queue{
+			if !already_in_queue {
 				bfs_alpha_queue = append(bfs_alpha_queue, linked_node.id)
 			}
 		}
