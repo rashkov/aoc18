@@ -70,19 +70,9 @@ func main() {
 			all_nodes[following_node_id] = following_node
 		}
 	}
-	fmt.Println(bfs(all_nodes))
 
-}
-
-func bfs(all_nodes map[string]Node) string{
 	// Find the one that has no forward links, that's our "sink"
-	// Perform BFS using an alphabetic queue
-	var (
-		bfs_alpha_queue []string
-		sink_node       Node
-		visited_links   map[string]bool = make(map[string]bool)
-		path            string
-	)
+	var sink_node Node
 	for _, node := range all_nodes {
 		if len(node.forward_links) == 0 {
 			fmt.Println(node.id, " is the sink node.")
@@ -90,43 +80,84 @@ func bfs(all_nodes map[string]Node) string{
 		}
 	}
 
-	Use(visited_links, path)
+	// Run BFS backwards from the sink to the roots
+	fmt.Println(bfs(all_nodes, sink_node))
 
-	// add the links to the queue
-	for _, back_node := range sink_node.back_links {
-		fmt.Println(back_node.id, " precedes it")
-		bfs_alpha_queue = append(bfs_alpha_queue, back_node.id)
-	}
+}
 
-	// sort the queue
-	sort.Strings(bfs_alpha_queue)
+func bfs(all_nodes map[string]Node, start_node Node) []string {
+	// Perform BFS using an alphabetic queue
+	var (
+		bfs_alpha_queue []string
+		visited_links   map[string]bool = make(map[string]bool)
+		path            []string
+	)
 
-	// remove the first element from the queue which has all its links visited
-	for index, node_id := range bfs_alpha_queue {
-		node := all_nodes[node_id];
-		all_links_visited := true
-		for _, linked_node := range node.back_links {
-			visited, ok := visited_links[node_id + linked_node.id]
-			if ok == false {
-				all_links_visited = false
-				visited_links[node_id + linked_node.id] = true
+	// Add the start_node to our queue
+	bfs_alpha_queue = append(bfs_alpha_queue, start_node.id)
+
+	for len(bfs_alpha_queue) > 0{
+		// sort the queue
+		sort.Strings(bfs_alpha_queue)
+		fmt.Println(bfs_alpha_queue)
+
+		// remove the first element from the queue which has all its links visited
+		// (On the first pass, that should be our start_node)
+		var current_node Node
+		for index, node_id := range bfs_alpha_queue {
+			node := all_nodes[node_id]
+			fmt.Println("starting with ", node_id, " has ", len(node.forward_links), " links")
+			all_links_visited := true
+			for _, linked_node := range node.forward_links {
+				_, ok := visited_links[linked_node.id + node.id]
+				if ok == false {
+					all_links_visited = false
+					visited_links[node_id+linked_node.id] = true
+					fmt.Println("naw", linked_node.id)
+				}else{
+					fmt.Println("visited from ", linked_node.id)
+				}
 			}
-			Use(linked_node, index, visited, all_links_visited)
+			if all_links_visited {
+				fmt.Println("all links visited")
+				// save it for processing
+				current_node = node
+				// remove it from queue
+				bfs_alpha_queue = append(bfs_alpha_queue[:index], bfs_alpha_queue[(index+1):]...)
+				break
+			} else {
+				// keep looking
+				fmt.Println("has unresolved links, moving on")
+				continue
+			}
 		}
-		if all_links_visited {
-			// remove it
-			fmt.Println("breaking")
-			// break
-		}else{
-			// move onto the next one
-			fmt.Println("continuing")
-			// continue
+
+		fmt.Println("Current node: ", current_node)
+		fmt.Println("BFS queue: ", bfs_alpha_queue)
+
+		// Got a node to process
+		// every time we remove an element from the queue, add its symbol to the answer string
+		path = append(path, current_node.id)
+
+		// add its links to the queue, marking the links as visited
+		// NOTE: Don't add a node if it's already in the queue
+		for _, linked_node := range current_node.back_links {
+			fmt.Println(linked_node.id, " precedes it")
+			visited_links[current_node.id + linked_node.id] = true
+			var already_in_queue = false
+			for _, queued := range bfs_alpha_queue {
+				if queued == linked_node.id{
+					already_in_queue = true
+				}
+			}
+			if !already_in_queue{
+				bfs_alpha_queue = append(bfs_alpha_queue, linked_node.id)
+			}
 		}
+		fmt.Println("BFS queue: ", bfs_alpha_queue)
+
+		// repeat
 	}
-
-	// repeat
-
-	// every time you remove an element from the queue, add its symbol to our answer string
 
 	// then reverse the string
 	return path
