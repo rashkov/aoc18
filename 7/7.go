@@ -136,7 +136,7 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 
 			for _, back_linked_node := range node.back_links {
 				_, ok := resolved_nodes[back_linked_node.id]
-				if ok == false{
+				if ok == false {
 					all_back_links_resolved = false
 					fmt.Println("can't use, its back link not resolved: ", back_linked_node.id)
 					break
@@ -176,12 +176,8 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		// NOTE: Don't add a node if it's already in the queue
 		for _, linked_node := range current_node.forward_links {
 			fmt.Println(linked_node.id, " follows it")
-			var already_in_queue = false
-			for _, queued := range bfs_alpha_queue {
-				if queued == linked_node.id {
-					already_in_queue = true
-				}
-			}
+
+			already_in_queue := already_enqueued(bfs_alpha_queue, linked_node.id)
 			if !already_in_queue {
 				bfs_alpha_queue = append(bfs_alpha_queue, linked_node.id)
 			}
@@ -192,4 +188,14 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 	}
 
 	return path
+}
+
+func already_enqueued(bfs_alpha_queue []string, node_id string) bool {
+	var already_in_queue = false
+	for _, queued := range bfs_alpha_queue {
+		if queued == node_id {
+			already_in_queue = true
+		}
+	}
+	return already_in_queue
 }
