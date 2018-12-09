@@ -91,15 +91,15 @@ func main() {
 		}
 	}
 	fmt.Println("root nodes: ", root_nodes)
-	// Use(root_nodes)
-	for _, root_node := range root_nodes {
-		path := bfs(all_nodes, root_node)
-		if len(path) != 0 {
-			fmt.Println("Found a path!")
-			fmt.Println(path)
-			break
-		}
-	}
+	Use(root_nodes)
+	// for _, root_node := range root_nodes {
+	// 	path := bfs(all_nodes, root_node)
+	// 	if len(path) != 0 {
+	// 		fmt.Println("Found a path!")
+	// 		fmt.Println(path)
+	// 		break
+	// 	}
+	// }
 	// for _, node := range all_nodes {
 	// 	path := bfs(all_nodes, node)
 	// 	if len(path) != 0 {
@@ -108,9 +108,10 @@ func main() {
 	// 		break
 	// 	}
 	// }
+	fmt.Println("Part 1: ", strings.Join(bfs(all_nodes), ""))
 }
 
-func bfs(all_nodes map[string]Node, start_node Node) []string {
+func bfs(all_nodes map[string]Node) []string {
 	// Perform BFS using an alphabetic queue
 	var (
 		bfs_alpha_queue []string
@@ -118,8 +119,10 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		path            []string
 	)
 
-	// Add the start_node to our queue
-	bfs_alpha_queue = append(bfs_alpha_queue, start_node.id)
+	// Add the all nodes to our queue
+	for _, node := range all_nodes {
+		bfs_alpha_queue = append(bfs_alpha_queue, node.id)
+	}
 
 	for len(bfs_alpha_queue) > 0 {
 		// sort the queue
