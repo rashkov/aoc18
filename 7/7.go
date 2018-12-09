@@ -30,7 +30,7 @@ type Node struct {
 var all_nodes map[string]Node = make(map[string]Node)
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 	var input []string
@@ -71,17 +71,24 @@ func main() {
 		}
 	}
 
-	// Find the one that has no forward links, that's our "sink"
-	var sink_node Node
+	// Find the one that has no back links, that's our "root"
+	// In case of multiple root nodes, choose the alphabetically first one
+	var root_node Node
 	for _, node := range all_nodes {
-		if len(node.forward_links) == 0 {
-			fmt.Println(node.id, " is the sink node.")
-			sink_node = node
+		if len(node.back_links) == 0 {
+			fmt.Println(node.id, " is a root node.")
+			if root_node.id == "" {
+				root_node = node
+			}else{
+				if node.id < root_node.id{
+					root_node = node
+				}
+			}
 		}
 	}
+	fmt.Println("Ultimate root node: ", root_node)
 
-	// Run BFS backwards from the sink to the roots
-	fmt.Println(bfs(all_nodes, sink_node))
+	fmt.Println(bfs(all_nodes, root_node))
 
 }
 
@@ -96,7 +103,7 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 	// Add the start_node to our queue
 	bfs_alpha_queue = append(bfs_alpha_queue, start_node.id)
 
-	for len(bfs_alpha_queue) > 0{
+	for len(bfs_alpha_queue) > 0 {
 		// sort the queue
 		sort.Strings(bfs_alpha_queue)
 		fmt.Println(bfs_alpha_queue)
@@ -106,14 +113,15 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		var current_node Node
 		for index, node_id := range bfs_alpha_queue {
 			node := all_nodes[node_id]
-			fmt.Println("starting with ", node_id, " has ", len(node.forward_links), " links")
+			fmt.Println("starting with ", node_id, " has ", len(node.back_links), " links")
 			all_links_visited := true
-			for _, linked_node := range node.forward_links {
+			for _, linked_node := range node.back_links {
 				_, ok := visited_links[linked_node.id + node.id]
 				if ok == false {
 					all_links_visited = false
 					visited_links[node_id+linked_node.id] = true
-					fmt.Println("naw", linked_node.id)
+					fmt.Println("can't use, not visited from ", linked_node.id)
+					break
 				}else{
 					fmt.Println("visited from ", linked_node.id)
 				}
@@ -127,13 +135,15 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 				break
 			} else {
 				// keep looking
-				fmt.Println("has unresolved links, moving on")
 				continue
 			}
 		}
 
 		fmt.Println("Current node: ", current_node)
 		fmt.Println("BFS queue: ", bfs_alpha_queue)
+		if current_node.id == ""{
+			panic("Couldn't find a suitable node!")
+		}
 
 		// Got a node to process
 		// every time we remove an element from the queue, add its symbol to the answer string
@@ -141,7 +151,7 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 
 		// add its links to the queue, marking the links as visited
 		// NOTE: Don't add a node if it's already in the queue
-		for _, linked_node := range current_node.back_links {
+		for _, linked_node := range current_node.forward_links {
 			fmt.Println(linked_node.id, " precedes it")
 			visited_links[current_node.id + linked_node.id] = true
 			var already_in_queue = false
@@ -159,6 +169,5 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		// repeat
 	}
 
-	// then reverse the string
 	return path
 }
