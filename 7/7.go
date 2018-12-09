@@ -45,11 +45,11 @@ func main() {
 		following_node_id := parsed[2]
 
 		var (
-			preceding_node Node
-			following_node Node
-			ok             bool
+			preceding_node         Node
+			following_node         Node
+			ok                     bool
 			already_linked_forward bool
-			already_linked_back bool
+			already_linked_back    bool
 		)
 		if preceding_node, ok = all_nodes[preceding_node_id]; ok != true {
 			preceding_node = Node{preceding_node_id, nil, nil}
@@ -91,7 +91,7 @@ func main() {
 		}
 	}
 	fmt.Println("root nodes: ", root_nodes)
-
+	// Use(root_nodes)
 	for _, root_node := range root_nodes {
 		path := bfs(all_nodes, root_node)
 		if len(path) != 0 {
@@ -100,13 +100,21 @@ func main() {
 			break
 		}
 	}
+	// for _, node := range all_nodes {
+	// 	path := bfs(all_nodes, node)
+	// 	if len(path) != 0 {
+	// 		fmt.Println("Found a path!")
+	// 		fmt.Println(path)
+	// 		break
+	// 	}
+	// }
 }
 
 func bfs(all_nodes map[string]Node, start_node Node) []string {
 	// Perform BFS using an alphabetic queue
 	var (
 		bfs_alpha_queue []string
-		visited_links   map[string]bool = make(map[string]bool)
+		resolved_nodes  map[string]bool = make(map[string]bool)
 		path            []string
 	)
 
@@ -124,23 +132,20 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		for index, node_id := range bfs_alpha_queue {
 			node := all_nodes[node_id]
 			fmt.Println("starting with ", node_id, " has ", len(node.back_links), " links")
-			all_links_visited := true
+			all_back_links_resolved := true
 
-			for _, linked_node := range node.back_links {
-				_, ok := visited_links[linked_node.id+node.id]
-				_, ok2 := visited_links[node.id+linked_node.id]
-				if ok == false && ok2 == false{
-					all_links_visited = false
-					visited_links[node_id+linked_node.id] = true
-					visited_links[linked_node.id+node_id] = true
-					fmt.Println("can't use, not visited from ", linked_node.id)
+			for _, back_linked_node := range node.back_links {
+				_, ok := resolved_nodes[back_linked_node.id]
+				if ok == false{
+					all_back_links_resolved = false
+					fmt.Println("can't use, its back link not resolved: ", back_linked_node.id)
 					break
 				} else {
-					fmt.Println("visited from ", linked_node.id)
+					fmt.Println("back link resolved: ", back_linked_node.id)
 				}
 			}
-			if all_links_visited {
-				fmt.Println("all links visited")
+			if all_back_links_resolved {
+				fmt.Println("all back links resolved, process it: ", node.id)
 				// save it for processing
 				current_node = node
 				// remove it from queue
@@ -155,20 +160,22 @@ func bfs(all_nodes map[string]Node, start_node Node) []string {
 		fmt.Println("Current node: ", current_node)
 		fmt.Println("BFS queue: ", bfs_alpha_queue)
 		if current_node.id == "" {
-			fmt.Println("Hit a dead end!\n")
+			fmt.Println("Hit a dead end!")
+			fmt.Println("")
 			return []string{}
 		}
 
 		// Got a node to process
 		// every time we remove an element from the queue, add its symbol to the answer string
 		path = append(path, current_node.id)
+		// and mark it as resolved
+		// (it is resolved because its backlinks are resolved, which is why we dequeued it)
+		resolved_nodes[current_node.id] = true
 
-		// add its links to the queue, marking the links as visited
+		// add its links to the queue
 		// NOTE: Don't add a node if it's already in the queue
 		for _, linked_node := range current_node.forward_links {
 			fmt.Println(linked_node.id, " follows it")
-			visited_links[current_node.id+linked_node.id] = true
-			// visited_links[linked_node.id+current_node.id] = true
 			var already_in_queue = false
 			for _, queued := range bfs_alpha_queue {
 				if queued == linked_node.id {
