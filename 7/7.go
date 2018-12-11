@@ -81,33 +81,6 @@ func main() {
 		all_nodes[following_node_id] = following_node
 	}
 
-	// Find the one that has no back links, that's our "root"
-	// In case of multiple root nodes, choose the alphabetically first one
-	var root_nodes []Node
-	for _, node := range all_nodes {
-		if len(node.back_links) == 0 {
-			fmt.Println(node.id, " is a root node.")
-			root_nodes = append(root_nodes, node)
-		}
-	}
-	fmt.Println("root nodes: ", root_nodes)
-	Use(root_nodes)
-	// for _, root_node := range root_nodes {
-	// 	path := bfs(all_nodes, root_node)
-	// 	if len(path) != 0 {
-	// 		fmt.Println("Found a path!")
-	// 		fmt.Println(path)
-	// 		break
-	// 	}
-	// }
-	// for _, node := range all_nodes {
-	// 	path := bfs(all_nodes, node)
-	// 	if len(path) != 0 {
-	// 		fmt.Println("Found a path!")
-	// 		fmt.Println(path)
-	// 		break
-	// 	}
-	// }
 	fmt.Println("Part 1: ", strings.Join(bfs(all_nodes), ""))
 }
 
@@ -115,7 +88,6 @@ func bfs(all_nodes map[string]Node) []string {
 	// Perform BFS using an alphabetic queue
 	var (
 		bfs_alpha_queue []string
-		resolved_nodes  map[string]bool = make(map[string]bool)
 		path            []string
 	)
 
@@ -127,78 +99,56 @@ func bfs(all_nodes map[string]Node) []string {
 	for len(bfs_alpha_queue) > 0 {
 		// sort the queue
 		sort.Strings(bfs_alpha_queue)
-		fmt.Println(bfs_alpha_queue)
 
 		// remove the first element from the queue which has all its back_links visited
 		// (On the first pass, that should be our start_node)
 		var current_node Node
-		for index, node_id := range bfs_alpha_queue {
+		var available_nodes []Node
+		for _, node_id := range bfs_alpha_queue {
 			node := all_nodes[node_id]
-			fmt.Println("starting with ", node_id, " has ", len(node.back_links), " links")
 			all_back_links_resolved := true
 
 			for _, back_linked_node := range node.back_links {
-				_, ok := resolved_nodes[back_linked_node.id]
-				if ok == false {
+				ok := index_of_node(path, back_linked_node.id)
+				if ok == -1 {
 					all_back_links_resolved = false
-					fmt.Println("can't use, its back link not resolved: ", back_linked_node.id)
 					break
-				} else {
-					fmt.Println("back link resolved: ", back_linked_node.id)
 				}
 			}
 			if all_back_links_resolved {
-				fmt.Println("all back links resolved, process it: ", node.id)
 				// save it for processing
-				current_node = node
-				// remove it from queue
-				bfs_alpha_queue = append(bfs_alpha_queue[:index], bfs_alpha_queue[(index+1):]...)
-				break
-			} else {
-				// keep looking
-				continue
+				if current_node.id == ""{
+					current_node = node
+				}
+				available_nodes = append(available_nodes, node)
 			}
 		}
 
-		fmt.Println("Current node: ", current_node)
-		fmt.Println("BFS queue: ", bfs_alpha_queue)
-		if current_node.id == "" {
-			fmt.Println("Hit a dead end!")
-			fmt.Println("")
-			return []string{}
-		}
+		process_step(&bfs_alpha_queue, current_node.id, &path)
 
-		// Got a node to process
-		// every time we remove an element from the queue, add its symbol to the answer string
-		path = append(path, current_node.id)
-		// and mark it as resolved
-		// (it is resolved because its backlinks are resolved, which is why we dequeued it)
-		resolved_nodes[current_node.id] = true
-
-		// add its links to the queue
-		// NOTE: Don't add a node if it's already in the queue
-		for _, linked_node := range current_node.forward_links {
-			fmt.Println(linked_node.id, " follows it")
-
-			already_in_queue := already_enqueued(bfs_alpha_queue, linked_node.id)
-			if !already_in_queue {
-				bfs_alpha_queue = append(bfs_alpha_queue, linked_node.id)
-			}
-		}
-		fmt.Println("BFS queue: ", bfs_alpha_queue)
-
-		// repeat
 	}
 
 	return path
 }
 
-func already_enqueued(bfs_alpha_queue []string, node_id string) bool {
-	var already_in_queue = false
-	for _, queued := range bfs_alpha_queue {
+func index_of_node(node_list []string, node_id string) int {
+	var position = -1
+	for index, queued := range node_list {
 		if queued == node_id {
-			already_in_queue = true
+			position = index
 		}
 	}
-	return already_in_queue
+	return position
+}
+
+/* process_step()
+ * removes a step from the queue and adds it to our solution
+ * The passed node must be eligible. Its backlinks must all be resolved
+ */
+func process_step(queue *[]string, node_id string, path *[]string){
+	// Add it to path
+	*path = append(*path, node_id)
+	// Remove it from queue
+	index := index_of_node(*queue, node_id)
+	*queue = append((*queue)[:index], (*queue)[(index+1):]...)
 }
