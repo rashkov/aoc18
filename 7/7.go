@@ -25,17 +25,17 @@ type Node struct {
 	id            string
 	forward_links []*Node
 	back_links    []*Node
-	locked_by int
+	locked_by     int
 }
 
 var all_nodes map[string]*Node = make(map[string]*Node)
 
-const NUM_WORKERS = 1
+const NUM_WORKERS = 2
 
 var workers [NUM_WORKERS]int
 
 func main() {
-	f, err := os.Open("./input.txt")
+	f, err := os.Open("./test_input.txt")
 	check(err)
 	defer f.Close()
 	var input []string
@@ -84,14 +84,17 @@ func main() {
 		all_nodes[following_node_id] = following_node
 	}
 
-	fmt.Println("Part 1: ", strings.Join(bfs(all_nodes), ""))
+	path, time := bfs(all_nodes)
+	fmt.Println("Part 1: ", strings.Join(path, ""))
+	fmt.Println("Part 2: ", time)
 }
 
-func bfs(all_nodes map[string]*Node) []string {
+func bfs(all_nodes map[string]*Node) ([]string, int) {
 	// Perform BFS using an alphabetic queue
 	var (
 		bfs_alpha_queue []string
 		path            []string
+		time            int
 	)
 
 	// Add the all nodes to our queue & sort it
@@ -100,7 +103,7 @@ func bfs(all_nodes map[string]*Node) []string {
 	}
 	sort.Strings(bfs_alpha_queue)
 
-	for len(bfs_alpha_queue) > 0 {
+	for time = 0; len(bfs_alpha_queue) > 0; time++ {
 		decrement_workers()
 		complete_steps(&bfs_alpha_queue, &path, all_nodes)
 
@@ -131,32 +134,27 @@ func bfs(all_nodes map[string]*Node) []string {
 		distribute_steps(available_nodes)
 	}
 
-	// remaining_seconds := 0
-	// for _, w := range workers {
-	// 		if w > remaining_seconds {
-	// 			remaining_seconds = w
-	// 		}
-	// }
-	return path
+	return path, time-1
 }
 
 func distribute_steps(available_steps []*Node) {
 	take := num_available_workers()
-	if take > len(available_steps){
+	if take > len(available_steps) {
 		take = len(available_steps)
 	}
 	for _, step := range available_steps[0:take] {
 		for worker_id, w := range workers {
-			if w == 0{
+			if w == 0 {
 				workers[worker_id] += calculate_step_cost(step.id)
 				step.locked_by = worker_id
 				fmt.Println("Giving step", step.id, "to worker", worker_id, "at a cost of", workers[worker_id], "locking it to", step.locked_by)
+				break
 			}
 		}
 	}
 }
 
-func complete_steps(queue *[]string, path *[]string, all_nodes map[string]*Node){
+func complete_steps(queue *[]string, path *[]string, all_nodes map[string]*Node) {
 	// run through the queue, find any locked ones, see if their worker is at zero, then process it
 	for _, step_id := range *queue {
 		step := all_nodes[step_id]
