@@ -90,28 +90,26 @@ func main() {
 }
 
 func bfs(all_nodes map[string]*Node) ([]string, int) {
-	// Perform BFS using an alphabetic queue
 	var (
-		bfs_alpha_queue []string
+		queue []string
 		path            []string
 		time            int
 	)
 
-	// Add the all nodes to our queue & sort it
+	// Add all nodes to our queue & sort it
 	for _, node := range all_nodes {
-		bfs_alpha_queue = append(bfs_alpha_queue, node.id)
+		queue = append(queue, node.id)
 	}
-	sort.Strings(bfs_alpha_queue)
+	sort.Strings(queue)
 
-	for time = 0; len(bfs_alpha_queue) > 0; time++ {
+	for time = 0; len(queue) > 0; time++ {
 		decrement_workers()
-		complete_steps(&bfs_alpha_queue, &path, all_nodes)
+		complete_steps(&queue, &path, all_nodes)
 
-		// remove the first element from the queue which has all its back_links visited
-		// (On the first pass, that should be our start_node)
-		var current_node *Node
+		// Find all available nodes.
+		// Available nodes have all their back-links resolved
 		var available_nodes []*Node
-		for _, node_id := range bfs_alpha_queue {
+		for _, node_id := range queue {
 			node := all_nodes[node_id]
 			all_back_links_resolved := true
 
@@ -123,10 +121,6 @@ func bfs(all_nodes map[string]*Node) ([]string, int) {
 				}
 			}
 			if all_back_links_resolved && node.locked_by == -1 {
-				// save it for processing
-				if current_node == nil {
-					current_node = node
-				}
 				available_nodes = append(available_nodes, node)
 			}
 		}
