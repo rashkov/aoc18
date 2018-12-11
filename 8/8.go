@@ -20,15 +20,17 @@ func Use(vals ...interface{}) {
 }
 
 type Node struct {
-	id           string
+	id           int
 	num_children int
 	num_meta     int
 	children     []*Node
 	meta         []int
 }
 
+var sum_meta int
+
 func main() {
-	input, err := ioutil.ReadFile("./test_input.txt")
+	input, err := ioutil.ReadFile("./input.txt")
 	check(err)
 	str_arr := strings.Split(strings.TrimSpace(string(input)), " ")
 
@@ -40,8 +42,11 @@ func main() {
 	}
 	var id = 65
 	read_cursor, node_ptr := parse(&nums, &id, 0)
-	fmt.Println("Read", read_cursor, "items")
-	fmt.Println(node_ptr)
+
+	fmt.Println("Read", read_cursor+1, "items") // +1 to include zeroth element
+	// fmt.Println(node_ptr)
+	fmt.Println("Part 1:", sum_meta)
+	fmt.Println("Part 2:", calc_node_score(node_ptr))
 }
 
 func parse(input_ptr *[]int, current_id *int, start int) (read_cursor int, self_ptr *Node) {
@@ -50,7 +55,7 @@ func parse(input_ptr *[]int, current_id *int, start int) (read_cursor int, self_
 	num_children := input[start]
 	num_meta := input[read_cursor]
 
-	self := Node{string(*current_id), num_children, num_meta, nil, nil}
+	self := Node{*current_id, num_children, num_meta, nil, nil}
 	(*current_id)++
 
 	var child_ptr *Node
@@ -61,9 +66,33 @@ func parse(input_ptr *[]int, current_id *int, start int) (read_cursor int, self_
 
 	for i := 0; i < num_meta; i++ {
 		read_cursor = read_cursor + 1
+		sum_meta += input[read_cursor]
 		self.meta = append(self.meta, input[read_cursor])
 	}
-	fmt.Println("Read cursor:", read_cursor)
-	fmt.Println("Node:", self)
+	// fmt.Println("Read cursor:", read_cursor)
+	// fmt.Println("Node:", self)
 	return read_cursor, &self
+}
+
+func calc_node_score(node *Node) int {
+	sum := 0
+	num_children := len(node.children)
+	if num_children == 0 {
+		for _, m := range node.meta {
+			sum += m
+		}
+	} else {
+		for _, m := range node.meta {
+			if m == 0 {
+				continue
+			}
+			// m is a a reference into node's children array,
+			// starting w/ 1 for 1st child, 2 for 2nd, etc.
+			if num_children >= m {
+				child := node.children[m-1]
+				sum += calc_node_score(child)
+			}
+		}
+	}
+	return sum
 }
