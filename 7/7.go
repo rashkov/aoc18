@@ -30,12 +30,12 @@ type Node struct {
 
 var all_nodes map[string]*Node = make(map[string]*Node)
 
-const NUM_WORKERS = 2
+const NUM_WORKERS = 5
 
 var workers [NUM_WORKERS]int
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 	var input []string
@@ -147,7 +147,7 @@ func distribute_steps(available_steps []*Node) {
 			if w == 0 {
 				workers[worker_id] += calculate_step_cost(step.id)
 				step.locked_by = worker_id
-				fmt.Println("Giving step", step.id, "to worker", worker_id, "at a cost of", workers[worker_id], "locking it to", step.locked_by)
+				//fmt.Println("Giving step", step.id, "to worker", worker_id, "at a cost of", workers[worker_id], "locking it to", step.locked_by)
 				break
 			}
 		}
@@ -190,7 +190,7 @@ func process_step(queue *[]string, node_id string, path *[]string) {
 }
 
 func calculate_step_cost(step_id string) int {
-	return int(step_id[0]) - 64 // + 60
+	return int(step_id[0]) - 64 + 60
 }
 
 func decrement_workers() {
@@ -199,7 +199,7 @@ func decrement_workers() {
 			workers[i]--
 		}
 	}
-	fmt.Println(workers)
+	//fmt.Println(workers)
 }
 
 func num_available_workers() int {
