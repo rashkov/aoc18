@@ -27,10 +27,10 @@ func main() {
 	last_marble_worth := 1618
 	high_score := 8317
 
-	var circle []int // index is position, value is marble #
-	current_player := 0
-	current_index := 0
-	current_marble := 0
+	var circle = []int{ 0, 1 } // index is position, value is marble #
+	current_player := 2
+	current_index := 1
+	current_marble := 2
 
 	Use(circle, current_index, current_marble, last_marble_worth, high_score)
 	// rotate through the number of players
@@ -38,14 +38,15 @@ func main() {
 	// update the slice
 	// check if marble is multiple of 23
 
-	n := 0
-	for current_player < num_players && n < 10 {
-		//fmt.Println(current_player)
+	fmt.Println(circle)
+	for n := 0; n < 10; n++ {
 		var modval int
 		if len(circle) == 0 {
 			modval = 1
 		} else if len(circle) == 1 {
 			modval = 2
+		} else if len(circle) == current_index + 2{
+			modval = len(circle) + 1
 		} else {
 			modval = len(circle)
 		}
@@ -54,11 +55,11 @@ func main() {
 		splice(&circle, current_marble, new_index)
 		fmt.Println(circle)
 
-		n++
 		current_index = new_index
 		current_marble++
 		current_player = mod(current_player+1, num_players)
 	}
+
 }
 
 func mod(a int, b int) int {
