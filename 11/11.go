@@ -37,15 +37,42 @@ func main() {
 		max_power int
 		max_x     int
 		max_y     int
+		max_side  int
+	)
+	max_power, max_x, max_y = calc_max_power_level(&grid, 3)
+	fmt.Println("Part 1", "power:", max_power, "x:", max_x, "y:", max_y)
+
+	max_power = -1
+	max_x = -1
+	max_y = -1
+	max_side = -1
+	for side := 1; side <= 300; side++ {
+		power, x, y := calc_max_power_level(&grid, side)
+		if power > max_power{
+			max_power = power
+			max_x = x
+			max_y = y
+			max_side = side
+		}
+	}
+	fmt.Println("Part 2", "power:", max_power, "x:", max_x, "y:", max_y, "side:", max_side)
+
+}
+
+func calc_max_power_level(grid *[][]int, side int) (int, int, int){
+	var (
+		max_power int
+		max_x     int
+		max_y     int
 	)
 	for y := 1; y <= 300; y++ {
 		for x := 1; x <= 300; x++ {
 			// x,y is upper-left corner of our box
-			if x+2 <= 300 && y+2 <= 300 {
+			if x+side < 300 && y+side < 300 {
 				var total_power int
-				for k := y; k <= y+2; k++ {
-					for j := x; j <= x+2; j++ {
-						total_power += grid[k][j]
+				for k := y; k < y+side; k++ {
+					for j := x; j < x+side; j++ {
+						total_power += (*grid)[k][j]
 					}
 				}
 				if total_power > max_power {
@@ -56,8 +83,7 @@ func main() {
 			}
 		}
 	}
-
-	fmt.Println("Part 1", max_power, max_x, max_y)
+	return max_power, max_x, max_y
 }
 
 func calc_power_level(x_coord int, y_coord int, grid_serial_number int) int {
