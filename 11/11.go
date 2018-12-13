@@ -21,12 +21,24 @@ func main() {
 	serial_num := 6303 // from puzzle input
 
 	var grid [][]int = make([][]int, 301)
+	for i:=0; i<301; i++{
+		grid[i] = make([]int, 301)
+	}
+
+	var cached_power_level [][][]int = make([][][]int, 301)
+	for i:=0; i<301; i++{
+		cached_power_level[i] = make([][]int, 301)
+		for j:=0; j<301; j++{
+			cached_power_level[i][j] = make([]int, 301)
+			for k:=0; k<301; k++{
+				cached_power_level[i][j][k] = -999
+			}
+		}
+	}
+
 	for y := 1; y <= 300; y++ {
 		for x := 1; x <= 300; x++ {
 			//x_str := strconv.FormatInt(int64(x), 10)
-			if grid[y] == nil {
-				grid[y] = make([]int, 301)
-			}
 			pwr := calc_power_level(x, y, serial_num)
 			grid[y][x] = pwr
 		}
@@ -39,7 +51,7 @@ func main() {
 		max_y     int
 		max_side  int
 	)
-	max_power, max_x, max_y = calc_max_power_level(&grid, 3)
+	max_power, max_x, max_y = calc_max_power_level(&grid, 3, &cached_power_level)
 	fmt.Println("Part 1", "power:", max_power, "x:", max_x, "y:", max_y)
 
 	max_power = -1
@@ -47,7 +59,7 @@ func main() {
 	max_y = -1
 	max_side = -1
 	for side := 1; side <= 300; side++ {
-		power, x, y := calc_max_power_level(&grid, side)
+		power, x, y := calc_max_power_level(&grid, side, &cached_power_level)
 		if power > max_power{
 			max_power = power
 			max_x = x
@@ -59,7 +71,7 @@ func main() {
 
 }
 
-func calc_max_power_level(grid *[][]int, side int) (int, int, int){
+func calc_max_power_level(grid *[][]int, side int, cached_power_level *[][][]int) (int, int, int){
 	var (
 		max_power int
 		max_x     int
@@ -67,18 +79,41 @@ func calc_max_power_level(grid *[][]int, side int) (int, int, int){
 	)
 	for y := 1; y <= 300; y++ {
 		for x := 1; x <= 300; x++ {
-			// x,y is upper-left corner of our box
-			if x+side < 300 && y+side < 300 {
-				var total_power int
-				for k := y; k < y+side; k++ {
-					for j := x; j < x+side; j++ {
-						total_power += (*grid)[k][j]
+			if (*cached_power_level)[y][x][side-1] == -999{
+				// x,y is upper-left corner of our box
+				if x+side-1 <= 300 && y+side-1 <= 300 {
+					var total_power int
+					for k := y; k < y+side; k++ {
+						for j := x; j < x+side; j++ {
+							total_power += (*grid)[k][j]
+						}
 					}
+					if total_power > max_power {
+						max_power = total_power
+						max_x = x
+						max_y = y
+					}
+					(*cached_power_level)[y][x][side] = total_power
 				}
-				if total_power > max_power {
-					max_power = total_power
-					max_x = x
-					max_y = y
+			}else{
+				if x+side-1 <= 300 && y+side-1 <= 300 {
+					total_power := (*cached_power_level)[y][x][side-1]
+					// add row with y = y + side - 1
+					K := y + side - 1
+					for j := x; j < x+side; j++{
+						total_power += (*grid)[K][j]
+					}
+					// add the column with x = x + side - 1
+					L := x + side - 1
+					for m := y; m < y + side; m++{
+						total_power += (*grid)[m][L]
+					}
+					if total_power > max_power {
+						max_power = total_power
+						max_x = x
+						max_y = y
+					}
+					(*cached_power_level)[y][x][side] = total_power
 				}
 			}
 		}
