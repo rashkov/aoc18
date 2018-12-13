@@ -1,0 +1,3 @@
+[submodule "folks/aoc_2018"]
+	path = folks/aoc_2018
+	url = https://github.com/ngoldbaum/aoc_2018/
