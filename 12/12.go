@@ -56,8 +56,8 @@ func main() {
 }
 
 func step(state *[]string, rules *[]Rule){
-	for _, rule := range *rules {
-		for i:=0; i<len(*state); i++{ // i is current index into state
+	for i:=0; i<len(*state); i++{ // i is current index into state
+		for _, rule := range *rules {
 			matches := true
 			for j, rule_letter := range rule.pattern {
 				var state_letter string
@@ -97,6 +97,8 @@ func step(state *[]string, rules *[]Rule){
 			}
 			if matches {
 				(*state)[i] = rule.outcome
+			}else{
+				continue
 			}
 		}
 	}
