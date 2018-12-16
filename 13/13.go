@@ -36,6 +36,8 @@ type Carts [][][]*Cart
 
 var carts Carts
 
+var part_1_complete = false
+
 func print(grid_ptr *[][]string, carts_ptr *Carts) {
 	grid := *grid_ptr
 	carts := *carts_ptr
@@ -43,7 +45,7 @@ func print(grid_ptr *[][]string, carts_ptr *Carts) {
 		fmt.Print(y)
 		for x, col := range row {
 			if len(carts[y][x]) == 1 {
-				if carts[y][x][0] != nil{
+				if carts[y][x][0] != nil {
 					fmt.Print((*carts[y][x][0]).sym)
 				}
 			} else {
@@ -55,7 +57,6 @@ func print(grid_ptr *[][]string, carts_ptr *Carts) {
 }
 
 func (cart_ptr *Cart) move(next_x, next_y int) {
-	fmt.Println("MOVING")
 	(*cart_ptr).prev_x = (*cart_ptr).x
 	(*cart_ptr).prev_y = (*cart_ptr).y
 	(*cart_ptr).x = next_x
@@ -63,29 +64,47 @@ func (cart_ptr *Cart) move(next_x, next_y int) {
 	(*cart_ptr).assert_on_track()
 
 	carts_ptr := (*cart_ptr).carts_ptr
-	Use(carts_ptr)
+
 	carts_at_xy := (*carts_ptr)[cart_ptr.prev_y][cart_ptr.prev_x]
-	moved := false
 	for i, cart_at_xy_ptr := range carts_at_xy {
 		if cart_at_xy_ptr == cart_ptr {
 			// Remove it from its old location
 			array_delete(&carts_at_xy, i)
+			// Don't forget to assign it back!
+			(*carts_ptr)[cart_ptr.prev_y][cart_ptr.prev_x] = carts_at_xy
+
 			// insert it into its new location
 			(*carts_ptr)[cart_ptr.y][cart_ptr.x] = append((*carts_ptr)[cart_ptr.y][cart_ptr.x], cart_ptr)
-			// Use this for assertion
+
+			// Check crash condition
 			if len((*carts_ptr)[cart_ptr.y][cart_ptr.x]) > 1 {
-				crash_str := fmt.Sprintf("CRASHED! at x=%d, y=%d", cart_ptr.x, cart_ptr.y)
-				fmt.Println(carts)
-				panic(crash_str)
+				if(!part_1_complete){
+					part_1_complete = true
+					crash_str := fmt.Sprintf("The carts have CRASHED! at x=%d, y=%d", cart_ptr.x, cart_ptr.y)
+					fmt.Println("Part 1:", crash_str)
+				}
+
+				// Remove the crashed carts from the carts collection
+				(*carts_ptr)[cart_ptr.y][cart_ptr.x] = []*Cart{}
+
+				// If there's only one cart left, print its location and exit
+				var carts_remaining []*Cart
+				for _, row := range *carts_ptr {
+					for _, col := range row {
+						if len(col) > 0 {
+							carts_remaining = append(carts_remaining, col...)
+						}
+					}
+				}
+				fmt.Println("Carts remaining:", len(carts_remaining))
+				if len(carts_remaining) == 1 {
+					last_cart := (*carts_remaining[0])
+					fmt.Printf("Part 2: Last cart remaining at: x=%d, y=%d", last_cart.x, last_cart.y)
+					os.Exit(0)
+				}
 			}
-			moved = true
 		}
 	}
-	if !moved {
-		panic("Couldn't move cart.")
-	}
-	//fmt.Println(len(carts_at_xy))
-	//Use(carts_at_xy)
 }
 
 func (cart_ptr *Cart) assert_on_track() {
@@ -93,6 +112,8 @@ func (cart_ptr *Cart) assert_on_track() {
 	grid_ptr := cart_ptr.grid_ptr
 	grid_sym := (*grid_ptr)[y][x]
 	if grid_sym == " " {
+		fmt.Println("Jumped off the track")
+		fmt.Println(cart_ptr)
 		panic("Jumped off the track")
 	}
 }
@@ -136,9 +157,9 @@ func (cart_ptr *Cart) step() {
 		turns_mod := int(math.Mod(float64(cart_ptr.num_turns), float64(3)))
 		if turns_mod == 0 {
 			(*cart_ptr).turn("left")
-		} else if cart_ptr.num_turns == 1 {
+		} else if turns_mod == 1 {
 			// go straight: don't change the symbol
-		} else if cart_ptr.num_turns == 2 {
+		} else if turns_mod == 2 {
 			// go right
 			(*cart_ptr).turn("right")
 		}
@@ -173,14 +194,14 @@ func (cart_ptr *Cart) step() {
 }
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 	var grid [][]string
 	scanner := bufio.NewScanner(f)
 	defer check(scanner.Err())
 	for scanner.Scan() {
-		grid = append(grid, strings.Split(strings.TrimSpace(scanner.Text()), ""))
+		grid = append(grid, strings.Split(scanner.Text(), ""))
 	}
 
 	carts = make([][][]*Cart, len(grid))
@@ -201,18 +222,18 @@ func main() {
 			}
 		}
 	}
-	print(&grid, &carts)
-	for i := 0; i < 1; i++ {
-		fmt.Println("STEP:", i)
+	//print(&grid, &carts)
+	for {
+		//fmt.Println("STEP:", i)
+		//fmt.Println()
 		step_all(&carts)
-		print(&grid, &carts)
-		fmt.Println(carts)
-		//fmt.Println(carts)
+		//print(&grid, &carts)
 	}
 }
 
 func step_all(carts_ptr *Carts) {
-	fmt.Println(*carts_ptr)
+	// Useful to place to print the carts state
+	// fmt.Println(*carts_ptr)
 	var carts_to_be_stepped []*Cart
 	for y, row := range *carts_ptr {
 		Use(y)
