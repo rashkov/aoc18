@@ -20,13 +20,13 @@ func Use(vals ...interface{}) {
 	}
 }
 
-type Rule struct{
+type Rule struct {
 	pattern string
 	outcome string
 }
 
 func main() {
-	f, err := os.Open("./test_input.txt")
+	f, err := os.Open("./input.txt")
 	check(err)
 	defer f.Close()
 	var input []string
@@ -38,6 +38,7 @@ func main() {
 
 	var state []string
 	var rules []Rule
+	var zero_place = 0
 	for line_no, line := range input {
 		if line_no == 0 {
 			parsed := regexp.MustCompile(`initial state: (.+$)`).FindStringSubmatch(line)
@@ -48,58 +49,72 @@ func main() {
 		}
 	}
 
-	fmt.Println(strings.Join(state, ""))
-	for i:=0; i<20; i++{
-		step(&state, &rules)
-		fmt.Println(strings.Join(state, ""))
+	//fmt.Println(strings.Join(state, ""))
+	for i := 1; i <= 300; i++ {
+		state = step(state, &rules, &zero_place)
+		//fmt.Println(strings.Join(state, ""))
+		fmt.Println(i, part_1_sum(state, zero_place))
 	}
+	fmt.Println("Part 1:", part_1_sum(state, zero_place))
+	fmt.Println("Part 2:", "the score increases by 73 points per generation. Use y=mx+b to figure out the rest.")
+	fmt.Println("Part 2:", (50000000000-300)*73+23676)
+
 }
 
-func step(state *[]string, rules *[]Rule){
-	for i:=0; i<len(*state); i++{ // i is current index into state
+func part_1_sum(state[]string, offset int) int{
+	var sum int
+	for index, state_letter := range state {
+		if string(state_letter) == "#"{
+			sum += index - offset
+		}
+	}
+	return sum
+}
+
+func step(state []string, rules *[]Rule, zero_place *int) []string {
+	// Expand it if there's a flower within the first or last two pots
+	if state[0] == "#" || state[1] == "#" {
+		*zero_place += 2
+		state = append([]string{".", "."}, state...)
+	}
+	if state[len(state)-1] == "#" || state[len(state)-2] == "#" {
+		state = append(state, []string{".", "."}...)
+	}
+	new_state := make([]string, len(state))
+	for i := 0; i < len(state); i++ { // i is current index into state
+		found_rule := false
 		for _, rule := range *rules {
-			matches := true
+			rule_matches := true
 			for j, rule_letter := range rule.pattern {
 				var state_letter string
-
-				switch{
-				case j == 0:
-					if i - 2 < 0{
-						state_letter = "."
-					}else{
-						state_letter = (*state)[i-2]
-					}
-				case j == 1:
-					if i - 1 < 0{
-						state_letter = "."
-					}else{
-						state_letter = (*state)[i-1]
-					}
-				case j == 2:
-					state_letter = (*state)[i]
-				case j == 3:
-					if i + 1 > len(*state)-1{
-						state_letter = "."
-					}else{
-						state_letter = (*state)[i+1]
-					}
-				case j == 4:
-					if i + 2 > len(*state)-1{
-						state_letter = "."
-					}else{
-						state_letter = (*state)[i+2]
-					}
+				var offset = i - (2 - j)
+				if offset < 0 || offset >= len(state) {
+					state_letter = "."
+				} else {
+					state_letter = state[offset]
 				}
-				if string(rule_letter) != state_letter{
-					matches = false
-					break
+				if string(rule_letter) != state_letter {
+					rule_matches = false
 				}
 			}
-			if matches {
-				(*state)[i] = rule.outcome
-			}else{
+			if rule_matches {
+				//state[i] = rule.outcome
+				new_state[i] = rule.outcome
+				found_rule = true
+				break
+			} else {
 				continue
 			}
 		}
+		Use(found_rule)
+		// if i == 7 {
+		// 	fmt.Println("found a rule for 7?", found_rule)
+		// 	fmt.Println((*state)[5:10])
+		// }
+		if !found_rule {
+			//state[i] = "."
+			new_state[i] = "."
+		}
 	}
+	return new_state
 }
