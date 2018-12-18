@@ -19,13 +19,18 @@ func Use(vals ...interface{}) {
 	}
 }
 
-//const INPUT = 793031
-const INPUT = 10000000
+const INPUT = 793031
+const INPUT2 = 793031
+
+// const INPUT = 2018
+// const INPUT2 = 59414
+const FUDGE_FACTOR = 30
+
 const NUM_ELVES = 2
 
 type Kitchen struct {
 	elves               [NUM_ELVES]int
-	recipes             [(INPUT + 10) * 2]int
+	recipes             [(INPUT + 10) * 2 * FUDGE_FACTOR]int
 	latest_recipe_index int
 }
 
@@ -75,28 +80,34 @@ func (kitchen *Kitchen) sum() int {
 func main() {
 	var kitchen Kitchen
 	kitchen.initialize()
-	for i := 0; i < INPUT+10; i++ {
+	for i := 0; i < (INPUT+10)*FUDGE_FACTOR; i++ {
 		kitchen.create_new_recipes()
 		kitchen.assign_new_tasks()
 		// fmt.Println(kitchen.recipes[0 : kitchen.latest_recipe_index+1])
+
+		input_str := strconv.FormatInt(int64(INPUT2), 10)
+		input_str_len := len(input_str)
+		if kitchen.latest_recipe_index > input_str_len {
+			var output_str_arr []string
+			for _, el := range kitchen.recipes[i : i+input_str_len] {
+				output_str_arr = append(output_str_arr, strconv.FormatInt(int64(el), 10))
+			}
+			output_str := strings.Join(output_str_arr, "")
+			//fmt.Println("Comparing", output_str, input_str)
+			if output_str == input_str {
+				fmt.Println("Part 2, found string after", i, "recipes")
+			}
+		}
+
+		if i == INPUT+10-1 {
+			var last_10 []string
+			for _, k := range kitchen.recipes[INPUT : INPUT+10] {
+				last_10 = append(last_10, strconv.FormatInt(int64(k), 10))
+			}
+			fmt.Println("Part 1:", strings.Join(last_10, ""))
+		}
 	}
 
-	var last_10 []string
-	for _, k := range kitchen.recipes[INPUT: INPUT+10] {
-		last_10 = append(last_10, strconv.FormatInt(int64(k), 10))
-	}
-
-	fmt.Println("Sum of last 10:", strings.Join(last_10, ""))
 	//fmt.Println("Sum of all:", strings.Join(all, ""))
 
-	input_str := strconv.FormatInt(int64(INPUT), 10)
-	input_str_len := len(input_str)
-
-	var output_str []string
-	for _, el := range kitchen.recipes[kitchen.latest_recipe_index-input_str_len:kitchen.latest_recipe_index+1]{
-		output_str = append(output_str, strconv.FormatInt(int64(el), 10))
-	}
-	if strings.Join(output_str, "") == input_str {
-		fmt.Println("FOUND IT")
-	}
 }
