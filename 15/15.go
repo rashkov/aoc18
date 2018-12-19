@@ -48,21 +48,35 @@ func (board *Board) get_path(x1, y1, x2, y2 int) {
 	if !present || !present2 {
 		panic("Invalid places requested in get_path")
 	}
-	fmt.Println(sq1, sq2)
+	Use(sq2)
 
 	distances := make(map[int]map[int]int)
 
-	seen := create(map[int]map[int]Square)
-	not_seen := create(map[int]map[int]Square)
+	seen := make(map[int]map[int]Square)
+	not_seen := make(map[int]map[int]Square)
 	var current Square
 	for _, row := range board.squares {
 		for _, square := range row {
 			if square.x == sq1.x && square.y == sq1.y {
 				current = square
+				_, prs := distances[current.y]
+				if !prs{
+					distances[current.y] = make(map[int]int)
+				}
 				distances[current.y][current.x] = 0
+				_, prs = seen[current.y]
+				if !prs{
+					seen[current.y] = make(map[int]Square)
+				}
+				seen[current.y][current.x] = current
 				continue
 			}
-			not_seen = append(not_seen, square)
+			_, prs := not_seen[square.y]
+			if !prs{
+				not_seen[square.y] = make(map[int]Square)
+			}
+
+			not_seen[square.y][square.x] = square
 		}
 	}
 	fmt.Println("Current:", current)
@@ -74,17 +88,25 @@ func (board *Board) get_path(x1, y1, x2, y2 int) {
 	distance_from_source_to_current := distances[current.y][current.x]
 	for _, neighbor := range neighbors {
 		distance_from_current_to_neighbor := 1
+		_, prs := distances[neighbor.y]
+		if !prs{
+			distances[neighbor.y] = make(map[int]int)
+		}
 		distances[neighbor.y][neighbor.x] = distance_from_source_to_current + distance_from_current_to_neighbor
 
-		// NOTE: Left off here
-
-		_, prs := seen[neighbor.y][neighbor.x]
-		if prs{
+		_, prs = seen[neighbor.y][neighbor.x]
+		if prs {
 			panic("Overwriting an item in the seen map")
+		}
+		_, prs = seen[neighbor.y]
+		if !prs{
+			seen[neighbor.y] = make(map[int]Square)
 		}
 		seen[neighbor.y][neighbor.x] = neighbor
 		delete(not_seen[neighbor.y], neighbor.x)
 	}
+	fmt.Println("Seen:", seen)
+	fmt.Println("distances", distances)
 }
 
 func (board *Board) get_neighbors(sq Square) (adjacent_squares []Square) {
@@ -209,7 +231,6 @@ func main() {
 		for x, sym := range row {
 			board.insert(x, y, sym)
 		}
-		fmt.Println(row)
 	}
 
 	elves := board.get_all_of_kind("elf")
