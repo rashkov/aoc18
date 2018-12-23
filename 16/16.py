@@ -95,30 +95,80 @@ assert seti((4,1,2,3), *(9,None,0)) == [9,1,2,3]
 
 #
 # Greater-than testing:
-# 
 #     gtir (greater-than immediate/register) sets register C to 1 if value A is greater than register B. Otherwise, register C is set to 0.
 def gtir(registers, a, b, c):
     registers = list(registers)
-    registers[c] = 0
     if a > registers[b]:
         registers[c] = 1
+    else:
+        registers[c] = 0
     return registers
-assert seti((4,1,2,3), *(5,1,0)) == [1,1,2,3]
-assert seti((1,4,2,3), *(0,1,0)) == [0,1,2,3]
+assert gtir((4,1,2,3), *(5,1,0)) == [1,1,2,3]
+assert gtir((4,1,2,3), *(0,1,0)) == [0,1,2,3]
 
 #     gtri (greater-than register/immediate) sets register C to 1 if register A is greater than value B. Otherwise, register C is set to 0.
-#     gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
-# 
-# Equality testing:
-# 
-#     eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
-#     eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
-#     eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
+def gtri(registers, a, b, c):
+    registers = list(registers)
+    if registers[a] > b:
+        registers[c] = 1
+    else:
+        registers[c] = 0
+    return registers
+assert gtri((4,1,2,3), *(0,1,0)) == [1,1,2,3]
+assert gtri((4,1,2,3), *(1,2,0)) == [0,1,2,3]
 
-#print(runsets[0])
-#ops = [mulr, muli]
-#for op in ops:
-#    instruction = runsets[0]['instruction'][1:]
-#    before = runsets[0]['before']
-#    print(op(before, *instruction))
+#     gtrr (greater-than register/register) sets register C to 1 if register A is greater than register B. Otherwise, register C is set to 0.
+def gtrr(registers, a, b, c):
+    registers = list(registers)
+    if registers[a] > registers[b]:
+        registers[c] = 1
+    else:
+        registers[c] = 0
+    return registers
+assert gtrr((4,1,2,3), *(0,1,0)) == [1,1,2,3]
+assert gtrr((4,1,2,3), *(1,2,0)) == [0,1,2,3]
+
+#
+# Equality testing:
+#
+#     eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
+def eqir(registers, a, b, c):
+    registers = list(registers)
+    if a == registers[b]:
+        registers[c] = 1
+    else:
+        registers[c] = 0
+    return registers
+assert eqir((4,4,2,3), *(4,0,0)) == [1,4,2,3]
+assert eqir((4,1,2,3), *(9,0,0)) == [0,1,2,3]
+
+#     eqri (equal register/immediate) sets register C to 1 if register A is equal to value B. Otherwise, register C is set to 0.
+def eqri(registers, a, b, c):
+    registers = list(registers)
+    if registers[a] == b:
+        registers[c] = 1
+    else:
+        registers[c] = 0
+    return registers
+assert eqri((4,4,2,3), *(0,4,0)) == [1,4,2,3]
+assert eqri((4,1,2,3), *(0,5,0)) == [0,1,2,3]
+
+#     eqrr (equal register/register) sets register C to 1 if register A is equal to register B. Otherwise, register C is set to 0.
+def eqrr(registers, a, b, c):
+    registers = list(registers)
+    if registers[a] == registers[b]:
+        registers[c] = 1
+    else:
+        registers[c] = 0
+    return registers
+
+assert eqrr((4,4,2,3), *(0,1,0)) == [1,4,2,3]
+assert eqrr((4,1,2,3), *(0,2,0)) == [0,1,2,3]
+
+stats = {}
+ops = [mulr, muli]
+for op in ops:
+   instruction = runsets[0]['instruction'][1:]
+   before = runsets[0]['before']
+   print(op(before, *instruction))
 
